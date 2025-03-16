@@ -125,8 +125,8 @@ const updateReadUnreadMessages = async (req, res) =>{
         roomData.members.map(it => 
             {
                 if (it.userName==userName) {
-                    preUnread = it.unread+unread;
-                    preUnrecieved = it.unrecieved+unrecieved;     
+                    preUnread = it.unread+1;
+                    preUnrecieved = it.unrecieved+1;     
                     documentId = it._id.toString();     
                 }
             }
