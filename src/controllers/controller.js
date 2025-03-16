@@ -136,33 +136,33 @@ const updateReadUnreadMessages = async (req, res) =>{
             updateUnreadData(unread, roomId, documentId, preUnread);
             updateUnrecieved(unrecieved, roomId, documentId, preUnrecieved);
         }else if(unread!=null){
-              if(unread==-1){
-                await room.updateOne(
-                    {
-                        "roomId" : roomId, 
-                        "members._id" : documentId
-                    },
-                    {
-                        $set : {"members.$.unread" : 0}
-                    }
-                );
-              }else{
+            //   if(unread==-1){
+            //     await room.updateOne(
+            //         {
+            //             "roomId" : roomId, 
+            //             "members._id" : documentId
+            //         },
+            //         {
+            //             $set : {"members.$.unread" : 0}
+            //         }
+            //     );
+            //   }else{
                 updateUnreadData(unread, roomId, documentId, preUnread);
-              }
+            //   }
         }else if(unrecieved!=null){
-            if(unrecieved==-1){
-                await room.updateOne(
-                    {
-                        "roomId" : roomId, 
-                        "members._id" : documentId
-                    },
-                    {
-                        $set : {"members.$.unrecieved" : 0}
-                    }
-                );
-            }else{
+            // if(unrecieved==-1){
+            //     await room.updateOne(
+            //         {
+            //             "roomId" : roomId, 
+            //             "members._id" : documentId
+            //         },
+            //         {
+            //             $set : {"members.$.unrecieved" : 0}
+            //         }
+            //     );
+            // }else{
                 updateUnrecieved(unrecieved, roomId, documentId, preUnrecieved)
-            }
+            // }
         }
         res.send({"message": "Done"});
     }catch(e){
@@ -172,26 +172,34 @@ const updateReadUnreadMessages = async (req, res) =>{
 
 async function updateUnreadData(unread, roomId, documentId, preUnread){
     const queryObj = {};
+    var tempPreUnread = preUnread;
+    if(unread==-1){
+        tempPreUnread = 0;
+    }
     queryObj.unread = unread;
-    const x = await room.updateOne({
+    await room.updateOne({
         "roomId" : roomId,
         "members._id": documentId
               }, {
         $set : {
-            "members.$.unread" : preUnread
+            "members.$.unread" : tempPreUnread
         }
         });
 }
 
 async function updateUnrecieved(unrecieved, roomId, documentId, preUnrecieved){
     const queryObj = {};
+    var tempPreUnrecieved = preUnrecieved;
+    if(unrecieved==-1){
+        tempPreUnrecieved = 0;
+    }
     queryObj.unrecieved = unrecieved;
     await room.updateOne({
         "roomId" : roomId,
         "members._id": documentId
         }, {
             $set : {
-            "members.$.unrecieved" : preUnrecieved
+            "members.$.unrecieved" : tempPreUnrecieved
             }
         });
 }
