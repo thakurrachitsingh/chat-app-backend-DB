@@ -73,14 +73,14 @@ const createRoom = async (req, res)=>{
     const queryObj = {};
     const response = {};
     try{
-        const { roomId, admin, members } = req.body;
+        const { _id, roomId, admin, members } = req.body;
     if(roomId!=null && admin!=null && members!=null){
-        const newRoom = new room({"roomId":roomId, "admin":admin, "members":members});
+        const newRoom = new room({"_id":_id, "roomId":roomId, "admin":admin, "members":members});
         const createdRoom = await newRoom.save();
         response.room = createdRoom;
         const roomIdObject = {};
         roomIdObject.roomId = roomId
-        await user.updateOne({"userName": admin}, {$push : {"roomIds": roomIdObject}});
+        // await user.updateOne({"userName": admin}, {$push : {"roomIds": roomIdObject}});
         members.map(async function(userName){
             await user.updateOne({"userName": userName.userName}, {$push : {"roomIds": roomIdObject}});
         })
@@ -125,37 +125,75 @@ const updateReadUnreadMessages = async (req, res) =>{
         roomData.members.map(it => 
             {
                 if (it.userName==userName) {
-                    preUnread = it.unread+1;
-                    preUnrecieved = it.unrecieved+1;     
-                    documentId = it._id;     
+                    preUnread = it.unread+unread;
+                    preUnrecieved = it.unrecieved+unrecieved;     
+                    documentId = it._id.toString();     
                 }
             }
         )
         const queryObj = {};
         if(unread!=null && unrecieved!=null){
-            queryObj.unread = unread;
-            queryObj.unrecieved = unrecieved;
-            await room.updateOne({
-                "chats._id": `${documentId}`
-              }, {"unread": preUnread});
-              await room.updateOne({
-                "chats._id": `${documentId}`
-              }, {"unrecieved": preUnrecieved});
+            updateUnreadData(unread, roomId, documentId, preUnread);
+            updateUnrecieved(unrecieved, roomId, documentId, preUnrecieved);
         }else if(unread!=null){
-            queryObj.unread = unread;
-            await room.updateOne({
-                "chats._id": `${documentId}`
-              }, {"unread": preUnread});
+              if(unread==-1){
+                await room.updateOne(
+                    {
+                        "roomId" : roomId, 
+                        "members._id" : documentId
+                    },
+                    {
+                        $set : {"members.$.unread" : 0}
+                    }
+                );
+              }else{
+                updateUnreadData(unread, roomId, documentId, preUnread);
+              }
         }else if(unrecieved!=null){
-            queryObj.unrecieved = unrecieved;
-            await room.updateOne({
-                "chats._id": `${documentId}`
-              }, {"unrecieved": preUnrecieved});
+            if(unrecieved==-1){
+                await room.updateOne(
+                    {
+                        "roomId" : roomId, 
+                        "members._id" : documentId
+                    },
+                    {
+                        $set : {"members.$.unrecieved" : 0}
+                    }
+                );
+            }else{
+                updateUnrecieved(unrecieved, roomId, documentId, preUnrecieved)
+            }
         }
         res.send({"message": "Done"});
     }catch(e){
         errorResponse(e);
     }
+}
+
+async function updateUnreadData(unread, roomId, documentId, preUnread){
+    const queryObj = {};
+    queryObj.unread = unread;
+    const x = await room.updateOne({
+        "roomId" : roomId,
+        "members._id": documentId
+              }, {
+        $set : {
+            "members.$.unread" : preUnread
+        }
+        });
+}
+
+async function updateUnrecieved(unrecieved, roomId, documentId, preUnrecieved){
+    const queryObj = {};
+    queryObj.unrecieved = unrecieved;
+    await room.updateOne({
+        "roomId" : roomId,
+        "members._id": documentId
+        }, {
+            $set : {
+            "members.$.unrecieved" : preUnrecieved
+            }
+        });
 }
 
 function successResponse(message){

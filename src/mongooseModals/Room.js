@@ -1,6 +1,9 @@
 const mongoose = require("mongoose");
 
 const roomModal = new mongoose.Schema({
+    _id : {
+        type : String
+    },
     roomId : {
         type : String,
         required : true,
@@ -11,6 +14,7 @@ const roomModal = new mongoose.Schema({
         required: true
     },
     members : [{
+        _id : String,
         userName : {
             type: String
         },
@@ -24,6 +28,7 @@ const roomModal = new mongoose.Schema({
         } 
     }],
     chats : [{
+        _id : String,
         userName : {
             type : String,
         },
